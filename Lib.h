@@ -1,5 +1,3 @@
-
-
 #include <vector>
 #include <map>
 #include <fstream>
@@ -8,7 +6,6 @@
 #include <cstdio>
 #include <string>
 #include "Rng.h"
-
 
 using namespace std;
 

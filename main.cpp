@@ -4,7 +4,7 @@
 #include "Rng.h"
 #include "Lib.h"
 #include <iostream>
-
+#include <Windows.h>
 using namespace std;
 
 int main() {
@@ -19,6 +19,10 @@ int main() {
 	const int nCase = 2000;
 	const int nCont = 2000;
 	
+	DWORD st = GetTickCount();
 	generateTable( K, maf, nSNP, nCase, nCont, tb, genotype, phenotype );
+	DWORD ed = GetTickCount();
+
+	cerr << "Time Elapsed : " << (ed-st) / 1000.0 << "sec" << endl;
 	writeOutput( "output.txt", nSNP, genotype, phenotype );
 }

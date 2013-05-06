@@ -4,51 +4,51 @@
 
 // WELL512 random number generator
 
-#define W 32
-#define R 16
-#define P 0
-#define M1 13
-#define M2 9
-#define M3 5
+#define __W 32
+#define __R 16
+#define __P 0
+#define __M1 13
+#define __M2 9
+#define __M3 5
 
-#define MAT0POS(t,v) (v^(v>>t))
-#define MAT0NEG(t,v) (v^(v<<(-(t))))
-#define MAT3NEG(t,v) (v<<(-(t)))
-#define MAT4NEG(t,b,v) (v ^ ((v<<(-(t))) & b))
+#define __MAT0POS(t,v) (v^(v>>t))
+#define __MAT0NEG(t,v) (v^(v<<(-(t))))
+#define __MAT3NEG(t,v) (v<<(-(t)))
+#define __MAT4NEG(t,b,v) (v ^ ((v<<(-(t))) & b))
 
-#define V0            STATE[state_i                   ]
-#define VM1           STATE[(state_i+M1) & 0x0000000fU]
-#define VM2           STATE[(state_i+M2) & 0x0000000fU]
-#define VM3           STATE[(state_i+M3) & 0x0000000fU]
-#define VRm1          STATE[(state_i+15) & 0x0000000fU]
-#define VRm2          STATE[(state_i+14) & 0x0000000fU]
-#define newV0         STATE[(state_i+15) & 0x0000000fU]
-#define newV1         STATE[state_i                 ]
-#define newVRm1       STATE[(state_i+14) & 0x0000000fU]
+#define __V0            __STATE[__state_i                   ]
+#define __VM1           __STATE[(__state_i+__M1) & 0x0000000fU]
+#define __VM2           __STATE[(__state_i+__M2) & 0x0000000fU]
+#define __VM3           __STATE[(__state_i+__M3) & 0x0000000fU]
+#define __VRm1          __STATE[(__state_i+15) & 0x0000000fU]
+#define __VRm2          __STATE[(__state_i+14) & 0x0000000fU]
+#define __newV0         __STATE[(__state_i+15) & 0x0000000fU]
+#define __newV1         __STATE[__state_i                 ]
+#define __newVRm1       __STATE[(__state_i+14) & 0x0000000fU]
 
-#define FACT 2.32830643653869628906e-10
+#define __FACT 2.32830643653869628906e-10
 
-static unsigned int state_i = 0;
-static unsigned int STATE[R]; 
+static unsigned int __state_i = 0;
+static unsigned int __STATE[__R]; 
 
 
-static unsigned int z0, z1, z2;
+static unsigned int __z0, __z1, __z2;
 
 void InitWELLRNG512a () {
     int j;
-    state_i = 0;
-    for (j = 0; j < R; j++)
-        STATE[j] = time(NULL);
+    __state_i = 0;
+    for (j = 0; j < __R; j++)
+        __STATE[j] = time(NULL);
 }
 
 double Random() {
-    z0    = VRm1;
-    z1    = MAT0NEG (-16,V0)    ^ MAT0NEG (-15, VM1);
-    z2    = MAT0POS (11, VM2)  ;
-    newV1 = z1                  ^ z2; 
-    newV0 = MAT0NEG (-2,z0)     ^ MAT0NEG(-18,z1)    ^ MAT3NEG(-28,z2) ^ MAT4NEG(-5,0xda442d24U,newV1) ;
-    state_i = (state_i + 15) & 0x0000000fU;
-    return ((double) STATE[state_i]) * FACT;
+    __z0    = __VRm1;
+    __z1    = __MAT0NEG (-16,__V0)    ^ __MAT0NEG (-15, __VM1);
+    __z2    = __MAT0POS (11, __VM2)  ;
+    __newV1 = __z1                  ^ __z2; 
+    __newV0 = __MAT0NEG (-2,__z0)     ^ __MAT0NEG(-18,__z1)    ^ __MAT3NEG(-28,__z2) ^ __MAT4NEG(-5,0xda442d24U,__newV1) ;
+    __state_i = (__state_i + 15) & 0x0000000fU;
+    return ((double) __STATE[__state_i]) * __FACT;
 }
 
 int RandomI( int mini, int maxi ) {
