@@ -24,5 +24,11 @@ int main() {
 	DWORD ed = GetTickCount();
 
 	cerr << "Time Elapsed : " << (ed-st) / 1000.0 << "sec" << endl;
-	writeOutput( "output.txt", nSNP, genotype, phenotype );
+	// writeOutput( "output.txt", nSNP, genotype, phenotype );
+
+	vector< double > penetrance = checkPenetrance( K, genotype, phenotype );
+
+	for( int i = 0 ; i < penetrance.size() ; ++i ) {
+		printf("%f\n", penetrance[i]);
+	}
 }

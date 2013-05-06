@@ -5,8 +5,11 @@
 #include <iostream>
 #include <cstdio>
 #include <string>
+#include <ppl.h>
+
 #include "Rng.h"
 
+using namespace concurrency;
 using namespace std;
 
 void exitWithError( const string &msg ) {
@@ -64,8 +67,10 @@ int getNormalGenotype() {
 
 vector< int > generateRow( int dim, int len, double maf ) {
 	vector<int> ret = vector< int >( len );
+
 	for( int i = 0 ; i < dim ; ++i ) ret[i] = getMarkerGenotype(maf);
 	for( int i = dim ; i < len ; ++i ) ret[i] = getNormalGenotype();
+	
 	return ret;
 }
 
@@ -113,4 +118,33 @@ void writeOutput( char *fileName, int nSNP, vector< vector<int> > &genotype, vec
 		fprintf(oup,"%d\n",phenotype[i]);
 	}
 	fclose(oup);
+}
+
+vector<double> checkPenetrance( const int &dim, const vector< vector<int> > &genotype, vector< int > &phenotype ) {
+	int maxComb = 1;
+	for( int i = 0 ; i < dim ; ++i ) maxComb *= 3;
+
+	vector<int> nCase( maxComb, 0 );
+	vector<int> nCont( maxComb, 0 );
+
+
+	for( int i = 0 ; i < genotype.size() ; ++i ) {
+		int c = 0;
+		for( int j = 0 ; j < dim ; ++j ) c = 3 * c + genotype[i][j];
+		if( phenotype[i] == 1 ) nCase[c]++;
+		else nCont[c]++;
+	}
+
+	vector< double > ret;
+	
+	for( int i = 0 ; i < maxComb ; ++i ) {
+		int tot = nCase[i] + nCont[i];
+		
+		cerr << nCase[i] << " " << nCont[i] << endl;
+		if( tot == 0 ) ret.push_back(0);
+		else {
+			ret.push_back( double(nCase[i]) / tot );
+		}
+	}
+	return ret;
 }
