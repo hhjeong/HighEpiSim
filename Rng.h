@@ -38,7 +38,7 @@ void InitWELLRNG512a () {
     int j;
     __state_i = 0;
     for (j = 0; j < __R; j++)
-        __STATE[j] = time(NULL);
+        __STATE[j] = (unsigned int)time(NULL);
 }
 
 double Random() {

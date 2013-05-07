@@ -20,15 +20,17 @@ int main() {
 	const int nCont = 2000;
 	
 	DWORD st = GetTickCount();
-	generateTable( K, maf, nSNP, nCase, nCont, tb, genotype, phenotype );
+	//generateData( K, maf, nSNP, nCase, nCont, tb, genotype, phenotype );
+	generateBalancedData( K, maf, nSNP, nCase+nCont, tb, genotype, phenotype );
 	DWORD ed = GetTickCount();
 
 	cerr << "Time Elapsed : " << (ed-st) / 1000.0 << "sec" << endl;
 	// writeOutput( "output.txt", nSNP, genotype, phenotype );
 
+	
 	vector< double > penetrance = checkPenetrance( K, genotype, phenotype );
-
-	for( int i = 0 ; i < penetrance.size() ; ++i ) {
+	/*
+	for( size_t i = 0 ; i < penetrance.size() ; ++i ) {
 		printf("%f\n", penetrance[i]);
-	}
+	}*/
 }
