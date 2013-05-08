@@ -196,6 +196,7 @@ void generateBalancedData( const int &dim, const double &maf, const int &nSNPs, 
 
 
 
+
 void writeOutput( char *fileName, int nSNP, vector< vector<int> > &genotype, vector< int > &phenotype ) {
 	FILE *oup = fopen(fileName,"w");
 
