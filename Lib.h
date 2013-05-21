@@ -7,6 +7,7 @@
 #include <string>
 #include <cassert>
 #include <numeric>
+#include <sstream>
 #include "Rng.h"
 
 using namespace std;
@@ -69,7 +70,7 @@ vector< int > generateRow( int dim, int len, const vector< double > &maf  ) {
 vector< double > getMafs( const int &nSNPs, const int &dim, const double &maf ) {
 	vector< double > ret( nSNPs );
 	for( int i = 0 ; i < dim ; ++i ) ret[i] = maf;
-	for( int i = dim ; i < nSNPs ; ++i ) ret[i] = Random() / 2;
+	for( int i = dim ; i < nSNPs ; ++i ) ret[i] = Random() * 0.49 + 0.01;
 	return ret;
 }
 
@@ -110,7 +111,37 @@ double getFreq( int x, double maf ) {
 	else return (1-maf) * (1-maf);
 }
 
-void generateBalancedData( const int &dim, const double &maf, const int &nSNPs,  int nTot, const vector<double> &tb, vector< vector<int> > &genotype, vector< int > &phenotype ) {
+void showTxtTable( const vector<double> &tb, const int dim = 3, FILE *oup = stderr ) {
+
+	if( dim == 3 ) {
+		const string A[] = { "AA", "Aa", "aa" };
+		const string B[] = { "BB", "Bb", "bb" };
+		const string C[] = { "CC", "Cc", "cc" };
+
+		fprintf( oup, "    " );
+		for( int k = 0 ; k < 3 ; ++k ) {
+			
+			for( int j = 0 ; j < 3 ; ++j ) fprintf( oup, "%s    ", B[j].c_str() );
+			fprintf( oup, "\t" );
+		}
+		fprintf( oup, "\n" );
+		for( int i = 2 ; i >= 0 ; --i ) {
+				fprintf( oup, "%s  ", A[i].c_str() );
+
+				for( int k = 2 ; k >= 0 ; --k ) {
+					for( int j = 2 ; j >= 0 ; --j ) {
+						fprintf( oup, "%.3f ", tb[k*9+i*3+j] );
+					}
+					fprintf( oup, "\t" );
+				}
+				fprintf( oup, "\n" );
+		}
+		
+	}
+
+}
+
+void generateBalancedData( const int &dim, const double &maf, const int &nSNPs,  int nTot, const vector<double> &tb, vector< vector<int> > &genotype, vector< int > &phenotype, bool debug = false ) {
 	assert( nTot % 2 == 0 );
 
 	int nCase = nTot / 2;
@@ -135,13 +166,14 @@ void generateBalancedData( const int &dim, const double &maf, const int &nSNPs, 
 		}
 		phenotype[i] = 0;
 	}
-	
+
 	int maxComb = 1;
 	for( int i = 0 ; i < dim ; ++i ) maxComb *= 3;
 	vector< double > bucket( maxComb, 0 );
 	vector< double > genoFreq( maxComb, 0 );
 	vector< double > genoDotPene( maxComb, 0 );
-	vector< double > relGenoDotPene( maxComb, 0 );
+	vector< double > relGenoDotPeneCase( maxComb, 0 );
+	vector< double > relGenoDotPeneCont( maxComb, 0 );
 
 	for( int i = 0 ; i < maxComb ; ++i ) {
 		double freq = 1.0;
@@ -153,16 +185,18 @@ void generateBalancedData( const int &dim, const double &maf, const int &nSNPs, 
 		genoFreq[i] = freq;
 		genoDotPene[i] = tb[i] * genoFreq[i];
 	}
-	assert( fabs(1-accumulate( begin(genoFreq), end(genoFreq), 0.0 )) < 1e-9 );
+
 	double prevalence = accumulate( begin(genoDotPene), end(genoDotPene), 0.0 );
 	for( int i = 0 ; i < maxComb ; ++i ) {
-		relGenoDotPene[i] = genoDotPene[i] / prevalence;
+		relGenoDotPeneCase[i] = tb[i] * genoFreq[i] / prevalence;
+		relGenoDotPeneCont[i] = (1-tb[i]) * genoFreq[i] / (1-prevalence);
 	}
 	
-	bucket[0] = relGenoDotPene[0];
+	bucket[0] = relGenoDotPeneCase[0];
 	for( int i = 1 ; i < maxComb ; ++i ) {
-		bucket[i] = bucket[i-1] + relGenoDotPene[i];
+		bucket[i] = bucket[i-1] + relGenoDotPeneCase[i];
 	}
+
 
 	for( int i = 0 ; i < nCase ; ++i ) {
 		double p = Random();
@@ -176,9 +210,10 @@ void generateBalancedData( const int &dim, const double &maf, const int &nSNPs, 
 		}
 	}
 
-	bucket[0] = genoFreq[0];
+	bucket[0] = relGenoDotPeneCont[0];
+
 	for( int i = 1 ; i < maxComb ; ++i ) {
-		bucket[i] = genoFreq[i-1] + genoFreq[i];
+		bucket[i] = bucket[i-1] + relGenoDotPeneCont[i];
 	}
 
 	for( int i = nCase ; i < nTot ; ++i ) {
@@ -192,6 +227,31 @@ void generateBalancedData( const int &dim, const double &maf, const int &nSNPs, 
 			c /= 3;
 		}
 	}	
+
+	if( debug ) {
+		showTxtTable( relGenoDotPeneCase, dim );
+		showTxtTable( relGenoDotPeneCont, dim );
+
+		vector< double > fCase(maxComb,0), fCont(maxComb,0);
+
+		for( int i = 0 ; i < nCase ; ++i ) {
+			int c = 0;
+			for( int j = 0 ; j < dim ; ++j ) c = 3 * c + genotype[i][j];
+			fCase[c]++;
+		}
+
+		for( int i = nCase ; i < nTot ; ++i ) {
+			int c = 0;
+			for( int j = 0 ; j < dim ; ++j ) c = 3 * c + genotype[i][j];
+			fCont[c]++;
+		}
+
+		for( int i = 0 ; i < maxComb ; ++i ) fCase[i] /= nCase, fCont[i] /= nCont;
+
+		showTxtTable( fCase, dim );
+		showTxtTable( fCont, dim );
+
+	}
 }
 
 
@@ -246,13 +306,24 @@ vector<double> checkPenetrance( const int &dim, const vector< vector<int> > &gen
 		}
 		prevalence += ret.back() * genof.back();
 	}
-	cerr << prevalence << endl;
 
 	double het = 0.0;
 	for( int i = 0 ; i < maxComb ; ++i ) {
 		het += ( ret[i] - prevalence ) * ( ret[i] - prevalence ) * genof[i];
 	}
+
+	//for( int i = 0 ; i < maxComb ; ++i ) cerr << nCase[i] << " " << nCont[i] << endl;
 	het /= prevalence * (1-prevalence);
-	cerr << het << endl;
+	cerr << prevalence << " " << het << endl;
+	return ret;
+}
+
+
+template <typename T>
+vector< T >  split( const string &s ) {
+	vector< T > ret;
+	istringstream inp(s);
+	T tok;
+	while(inp>>tok) ret.push_back(tok);
 	return ret;
 }

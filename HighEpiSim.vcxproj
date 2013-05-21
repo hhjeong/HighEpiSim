@@ -83,10 +83,7 @@
   <ItemGroup>
     <ClInclude Include="Lib.h" />
     <ClInclude Include="Rng.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="input.txt" />
-    <Text Include="output.txt" />
+    <ClInclude Include="Test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
